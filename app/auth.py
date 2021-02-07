@@ -1,12 +1,10 @@
 import re, datetime
 import flask_login as fl
-from flask import Blueprint, request, jsonify
-from app.ApiUtils import ApiUtils
+from flask import Blueprint, request, jsonify, current_app
+from app.ApiUtils import *
 from app.models import User
 
-
 _login_manager = fl.LoginManager()
-_apiUtils = ApiUtils()
 _authDB = None
 _app = None
 _globalCache = {}# 定义全局缓存区
@@ -18,46 +16,46 @@ def init_app(app, db):
     global _app, _authDB
     _app = app
     _authDB = db
-    _apiUtils.init_app(app)
     _login_manager.init_app(_app)
     _app.register_blueprint(_auth_bp)
 
 @_auth_bp.route('/login', methods=['POST'], endpoint='login')
-@_apiUtils.validsign()
+@validsign()
 def login():
     global _authDB
+    current_app.logger.info('login----')
     phone = request.form.get('phone')
     code = request.form.get('code')
     key = f'{phone}-{code}'
     sms_code = _globalCache.get(key)
     if sms_code is None or sms_code != code:
-        return _apiUtils.make_response_error(-1, 'sms code error')
+        return make_response_error(-1, 'sms code error')
 
     user_info = _authDB.session.query(User).filter(User.phone == phone).first()
     if user_info is None:
         user_info = _regist_by_phone(phone)
     fl.login_user(user_info)
     del _globalCache[key]
-    return _apiUtils.make_response_ok({
+    return make_response_ok({
         'user_id': user_info.id
     })
 
 @_auth_bp.route('/sendsms', methods=['POST'], endpoint='sendsms')
-@_apiUtils.validsign()
+@validsign()
 def sendSMS():
     phone = request.form.get('phone')
     if not re.match(_pattern_phone, phone):
-        _apiUtils.make_response_error(-1, '手机号格式有误！')
+       make_response_error(-1, '手机号格式有误！')
     code = '9527'
     key = f'{phone}-{code}'
     _globalCache[key]=code
-    return _apiUtils.make_response_ok({'phone': phone, 'code':code})
+    return make_response_ok({'phone': phone, 'code':code})
 
 @_auth_bp.route('/userInfo', methods=['GET'], endpoint='userInfo')
 @fl.login_required
-@_apiUtils.validsign()
+@validsign()
 def userInfo():
-    return _apiUtils.make_response_ok({
+    return make_response_ok({
         'user_id': fl.current_user.id,
         'username': fl.current_user.username,
         'email': fl.current_user.email
@@ -65,7 +63,7 @@ def userInfo():
 
 
 @_auth_bp.route('/logout', methods=['GET'], endpoint='logout')
-@_apiUtils.validsign()
+@validsign()
 def logout():
     fl.logout_user()
     return jsonify({'code': 0, 'msg':'注销成功'})

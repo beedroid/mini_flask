@@ -30,16 +30,5 @@ class User(db.Model, flask_login.UserMixin):
             return self.birthday.strftime('%Y-%m-%d')
         return None
 
-    @staticmethod
-    def check_token(uid, token):
-        if not token or not uid:
-            return False
-        user = User.query.filter_by(id=uid).first()
-        if not user:
-            return False
-        if not user.user_auth:
-            return False
-        return user.user_auth.token == token
-
     def __repr__(self):
         return f'{self.__class__.__name__}({self.id}, {self.nickname})'

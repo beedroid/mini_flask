@@ -21,6 +21,7 @@ api_handler_init_app(app, db)
 
 @app.route('/')
 def hello_world():
+    app.logger.info('hello, world!')
     return 'Hello World!'
 
 
