@@ -16,6 +16,10 @@ class config:
 class DevelopmentConfig(config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:123123@127.0.0.1:3306/economy?charset=utf8'
+    OPEN_APP_LIST = {
+        'appkey': 'mini_flask_demo',
+        'appsecret': '123123'
+    }
 
 
 class TestingConfig(config):
